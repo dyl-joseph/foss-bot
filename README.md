@@ -16,6 +16,86 @@ A QA bot, running as a Codex worker on `gpt-6-luna`, opened YouTube in its own A
 
 [Watch the recording](assets/videos/agentbox-youtube-omarchy.mp4)
 
+## How it works
+
+### A request, end to end
+
+The chief of staff is your chat's main thread. It plans and checks work but never edits product code. Bots do the work, each in its own worker.
+
+```mermaid
+sequenceDiagram
+    actor You
+    participant CoS as Chief of staff (main thread)
+    participant Board as board.md
+    participant Bots as Bots (Codex workers)
+    participant Rev as Reviewer (other model family)
+
+    You->>CoS: /chief-of-staff "fix X and record it"
+    CoS->>Board: read open streams
+    CoS->>CoS: restate, split into streams, pick a bot per stream
+    CoS->>Bots: brief = persona + GOAL, SCOPE, CONTEXT, ACCEPTANCE, VERIFY, REPORT
+    Note over Bots: writers get their own git worktree, at most 4 at once
+    Bots-->>CoS: report + evidence (diff, logs, screenshots, video)
+    CoS->>CoS: check evidence against ACCEPTANCE
+    CoS->>Rev: review the diff
+    Rev-->>CoS: findings
+    alt evidence missing or review fails
+        CoS->>Bots: fresh spawn with the gap named
+    else accepted
+        CoS->>CoS: commit the bot's diff (no agent trailers)
+        CoS->>Board: mark stream done with evidence link
+        CoS-->>You: outcome, one line per stream, next move
+    end
+```
+
+### Model routing in Claude Code
+
+Every `Agent` call passes through a PreToolUse hook before it runs.
+
+```mermaid
+flowchart TD
+    A["Agent tool call"] --> B{"subagent_type is<br/>codex:codex-rescue?"}
+    B -- no --> X["Denied: retry as codex:codex-rescue"]
+    B -- yes --> C{"prompt has<br/>Bot: qa / gardener / scribe?"}
+    C -- yes --> L["gpt-6-luna, effort max, no fast"]
+    C -- no --> D{"--model gpt-6-luna?"}
+    D -- yes --> F["gpt-6-luna, effort max, fast"]
+    D -- no --> S["gpt-6-sol, caller's --effort"]
+    L & F & S --> W["Haiku wrapper forwards the prompt"]
+    W --> P["codex-companion (patched for max + fast)"]
+    P --> R["Codex app-server on your ChatGPT login"]
+```
+
+### Model routing in Codex
+
+```mermaid
+flowchart LR
+    M["Codex main thread"] --> G["gpt-* seat"] --> SA["spawn_agent"]
+    SA --> Q{"bot?"}
+    Q -- "qa / gardener / scribe" --> AT["agent_type role<br/>gpt-6-luna, max"]
+    Q -- other --> DEF["default model"]
+    M --> CL["claude-* seat"] --> CP["claude -p --model claude-opus-5-5<br/>on your claude.ai login"]
+```
+
+### Isolated computer use
+
+GUI work never touches your own desktop. Each worker gets its own microVM from the [engine](https://github.com/dyl-joseph/cloud-computer-use-agents).
+
+```mermaid
+flowchart TB
+    subgraph Host
+        Bot["Bot in the Codex sandbox"] -- "agentbox ... (exec-policy rule<br/>runs it outside the sandbox)" --> AB["agentbox CLI"]
+        AB --> MSB["Microsandbox (KVM)"]
+        Rec["recordings/ on the host"]
+    end
+    subgraph VM["Worker VM (one per ID, cloned from the main seed)"]
+        CUA["CUA Driver daemon"] --> Desk["XFCE on Xvfb"] --> Chr["Chromium, seeded profile"]
+        CUA --> Cap["captures/: video, screenshots"]
+    end
+    MSB -- "msb exec --stream" --> CUA
+    Cap -- "agentbox record id pull" --> Rec
+```
+
 ## How it fits together
 
 | Piece | Where it installs | What it does |
