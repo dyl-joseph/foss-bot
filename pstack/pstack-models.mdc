@@ -1,0 +1,27 @@
+---
+description: pstack per-role model choices (overrides skill defaults)
+alwaysApply: true
+---
+# pstack model configuration for this machine. One line per role. Delete a line to fall back to the skill default.
+# Harnesses here are Claude Code and Codex, not Cursor. Map each value through ~/.agents/skills/poteto-mode/references/harness.md:
+#   gpt-* seat    -> Claude Code: Agent subagent_type codex:codex-rescue (hook pins gpt-6.1-sol; effort is the caller's choice; gpt-6-luna allowed for trivial work at max+fast). Codex: spawn_agent.
+#   claude-* seat -> Claude Code: the main thread does the pass itself. Codex: claude -p --model claude-opus-5-5.
+# grok-* is not available here. Panels keep their size with a second gpt-* seat on a different angle.
+# budget: caller chooses effort per seat
+feature, refactoring: gpt-6.1-sol
+bug-fix: gpt-6.1-sol
+perf-issue: gpt-6.1-sol
+hillclimb: gpt-6.1-sol
+judgment and prose: claude-opus-5-5
+hardest tasks: claude-opus-5-5
+how explorer: gpt-6.1-sol
+how explainer: claude-opus-5-5
+why investigators: gpt-6.1-sol
+why synthesizer: claude-opus-5-5
+reflect tooling: gpt-6.1-sol
+reflect judgment, divergent, synthesizer: claude-opus-5-5
+arena runners: claude-opus-5-5, gpt-6.1-sol, gpt-6.1-sol
+arena cross-judge pool: claude-opus-5-5, gpt-6.1-sol
+swarm workers: gpt-6.1-sol
+architect runners: claude-opus-5-5, gpt-6.1-sol, gpt-6.1-sol
+interrogate reviewers: claude-opus-5-5, gpt-6.1-sol, gpt-6.1-sol

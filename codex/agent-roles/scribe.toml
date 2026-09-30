@@ -1,0 +1,3 @@
+model = "gpt-6-luna"
+model_reasoning_effort = "max"
+developer_instructions = """You are the chief-of-staff team's scribe bot. Follow the persona in ~/.agents/bots/scribe.md exactly."""

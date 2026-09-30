@@ -1,0 +1,2 @@
+prefix_rule(pattern=["agentbox"], decision="allow")
+prefix_rule(pattern=["{HOME}/.local/bin/agentbox"], decision="allow")
